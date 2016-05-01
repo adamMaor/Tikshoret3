@@ -5,7 +5,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
+import java.util.Map.Entry;
+
+import View.Constants;
 
 public class Server {
 	private static ServerSocket serverSocket;
@@ -13,22 +17,31 @@ public class Server {
 	 * hashmap of orders<client,order> and order is <partNum,quantity>
 	 */
 	private static HashMap<Integer, HashMap<Integer, Integer>> clientCarts;
+	
+	private static volatile int clientsToWait;
 
 	public static void main(String[] args) {
-				
+			
+		clientsToWait = Constants.NUM_OF_CLIENTS;
 		clientCarts = new HashMap<>();
 		initInventory();
 		System.out.println("Inventory is initialized");
 		try {
 			serverSocket = new ServerSocket(9999);
-			while (true){
-				Socket s = serverSocket.accept();
-				ClientHandler ch = new ClientHandler(s);
-				Thread t = new Thread(ch);
-				t.start();
+			serverSocket.setSoTimeout(2000);
+			while (clientsToWait > 0 ){
+				try {
+					Socket s = serverSocket.accept();
+					ClientHandler ch = new ClientHandler(s);
+					Thread t = new Thread(ch);
+					t.start();
+				}
+				catch (SocketTimeoutException e){
+					// do nothing - just continue with the loop
+				}
 			}
 			
-			
+			System.out.println("All Clients Finished - Priting remaining Inventory\n" + Inventory.getInventory().toString());
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -40,12 +53,15 @@ public class Server {
 		
 	// adds an item to the client's cart
 	public static synchronized void addItem(int clientNumber, int itemNumber, int quantity) {
-		HashMap<Integer, Integer> clientOrder = getClientCart(clientNumber);
-		if (clientOrder == null){
-			clientOrder = new HashMap<Integer, Integer>();
-			clientCarts.put(clientNumber, clientOrder);
+		HashMap<Integer, Integer> clientCart = getClientCart(clientNumber);
+		if (clientCart == null){
+			clientCart = new HashMap<Integer, Integer>();
+			clientCarts.put(clientNumber, clientCart);
 		}
-		clientOrder.put(itemNumber, quantity);
+		else if (clientCart.containsKey(itemNumber)){
+			quantity += clientCart.get(itemNumber);
+		}
+		clientCart.put(itemNumber, quantity);
 	}
 	
 	// removes the client's entire cart
@@ -56,6 +72,26 @@ public class Server {
 	// gets a client's cart
 	public static synchronized HashMap<Integer, Integer> getClientCart(int clientNumber) {
 		return clientCarts.get(clientNumber);		
+	}
+	
+	// checks all item in cart and if all exist - removes from Inventory
+	public static synchronized boolean checkOutClient(int clientNum){
+		boolean res = true;
+		HashMap<Integer, Integer> clientCart = getClientCart(clientNum);
+		for (Entry<Integer, Integer> entry : clientCart.entrySet()){
+			res = Inventory.getInventory().checkIngredient(entry.getKey(), entry.getValue());
+			if (false == res){
+				return res;
+			}
+		}
+		for (Entry<Integer, Integer> entry : clientCart.entrySet()){
+			Inventory.getInventory().removeIngredient(entry.getKey(), entry.getValue());
+		}
+		return res;
+	}
+	
+	public static synchronized void clientFinished(){
+		clientsToWait--;
 	}
 	
 	private static void initInventory(){
