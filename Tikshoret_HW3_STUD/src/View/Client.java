@@ -25,7 +25,7 @@ public class Client extends Thread {
 
 	public void run() {
 
-		}
+		
 
 	}
 
@@ -39,11 +39,13 @@ public class Client extends Thread {
 
 	// sends a BUY REQUEST message to to server and returns a boolean response
 	private boolean sendBUY() throws IOException {
+		return false;
 		
 	}
 
 	// sends an ORD REQUEST message for a single ingredient and returns the server's RESPONSE message
 	private String[] sendRequest(int ingredientNumber, int quantity) throws IOException {
+		return null;
 
 	}
 	
