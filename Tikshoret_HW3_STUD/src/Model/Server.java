@@ -19,7 +19,7 @@ public class Server {
 		clientCarts = new HashMap<>();
 		initInventory();
 		System.out.println("Inventory is initialized");
-		
+	}	
 		
 	// adds an item to the client's cart
 	public static void addItem(int clientNumber, int itemNumber, int quantity) {
@@ -33,6 +33,8 @@ public class Server {
 	
 	// gets a client's cart
 	public static HashMap<Integer, Integer> getClientCart(int clientNumber) {
+		return null;
+		
 	}
 	
 	private static void initInventory(){
@@ -50,5 +52,5 @@ public class Server {
 		}
 	}
 	
-	}
+	
 }
