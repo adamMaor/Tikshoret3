@@ -20,6 +20,8 @@ public class Client extends Thread {
 	private int clientNum;
 	
 	private Socket clientSocket;
+	private DataOutputStream dos;
+	private DataInputStream dis;
 
 	public Client(int clientNum) {
 		this.myOrder = new HashMap<Integer, Integer>();
@@ -31,13 +33,15 @@ public class Client extends Thread {
 		boolean finished = false;	
 		try {
 			clientSocket = new Socket("127.0.0.1", 9999);
+			dos = new DataOutputStream(clientSocket.getOutputStream());
+			dis = new DataInputStream(clientSocket.getInputStream());
 			while (finished == false)
 			{
 				myOrder.clear();
 				int appemptsForCurrent = 0;
 				int ingNum = getRandomPartNum();
 				int ingQnt = getRandomQuantity(Constants.INIT_QTY);
-				while (myOrder.size() <= Constants.ITEMS_IN_ORD) {
+				while (myOrder.size() < Constants.ITEMS_IN_ORD) {
 					appemptsForCurrent++;
 					String[] response = sendRequest(ingNum, ingQnt);
 					// Do we need to check for matches in ORD/BUY/FIN, and Ing Number ????
@@ -61,11 +65,11 @@ public class Client extends Thread {
 							ingQnt = getRandomQuantity(availableQnt);
 						}
 					}		
-				finished = sendBUY();	
 				}
-			sendFIN();	
-			printOrder();
+				finished = sendBUY();				
 			}
+			printOrder();
+			sendFIN();
 		}catch (IOException e) {
 			// server com error
 			e.printStackTrace();
@@ -83,28 +87,16 @@ public class Client extends Thread {
 	// sends a BUY REQUEST message to to server and returns a boolean response
 	private boolean sendBUY() throws IOException {
 		String buyRequest = clientNum + " BUY ";
-				
-		DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
-		dos.writeUTF(buyRequest);
-		dos.close();
-		
-		DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
+		dos.writeUTF(buyRequest);	
 		String[] buyResponse = dis.readUTF().split(" ");
-		dis.close();		
 		return buyResponse[0].equals("ACK");		
 	}
 
 	// sends an ORD REQUEST message for a single ingredient and returns the server's RESPONSE message
 	private String[] sendRequest(int ingredientNumber, int quantity) throws IOException {
-		String ordRequest = clientNum + " ORD " + ingredientNumber + " " + quantity;
-				
-		DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
-		dos.writeUTF(ordRequest);
-		dos.close();
-		
-		DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
+		String ordRequest = clientNum + " ORD " + ingredientNumber + " " + quantity;	
+		dos.writeUTF(ordRequest);	
 		String[] orderResponse = dis.readUTF().split(" ");
-		dis.close();		
 		// do we need to check "ORD" ? not much use for it....
 		
 		return orderResponse;
@@ -112,12 +104,8 @@ public class Client extends Thread {
 	
 	// send a FIN REQUEST message to the server and closes the server socket
 	private void sendFIN() throws IOException {
-		String finRequest = clientNum + " FIN ";
-		
-		DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
+		String finRequest = clientNum + " FIN ";		
 		dos.writeUTF(finRequest);
-		dos.close();
-		clientSocket.close();
 	}
 
 	public void printOrder() {

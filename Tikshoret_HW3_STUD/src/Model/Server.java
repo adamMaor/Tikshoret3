@@ -28,10 +28,10 @@ public class Server {
 		System.out.println("Inventory is initialized");
 		try {
 			serverSocket = new ServerSocket(9999);
-			serverSocket.setSoTimeout(2000);
+			serverSocket.setSoTimeout(50);
 			while (clientsToWait > 0 ){
 				try {
-					Socket s = serverSocket.accept();
+					Socket s = serverSocket.accept();					
 					ClientHandler ch = new ClientHandler(s);
 					Thread t = new Thread(ch);
 					t.start();
@@ -41,7 +41,7 @@ public class Server {
 				}
 			}
 			
-			System.out.println("All Clients Finished - Priting remaining Inventory\n" + Inventory.getInventory().toString());
+			System.out.println("...All Clients Are Finished...\n" + Inventory.getInventory().toString());
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

@@ -21,60 +21,59 @@ public class ClientHandler implements Runnable {
 
 	@Override
 	public void run() {
-		DataInputStream dis;
 		try {
-			dis = new DataInputStream(socket.getInputStream());
-			String[] request = dis.readUTF().split(" ");
-			dis.close();
-			
-			int clientNum = Integer.parseInt(request[0]); 
-			String response = "";
-			
-			switch (request[1]) {
-			
-			case "ORD":
-				int ingNum = Integer.parseInt(request[2]);
-				int ingQnt = Integer.parseInt(request[3]);
-				int amountInInventory = Inventory.getInventory().amountLeft(ingNum);
-				if (amountInInventory >= ingQnt) {
-					response += "ACK";
-					Server.addItem(clientNum, ingNum, ingQnt);
-				}
-				else {
-					response += "NACK"; 
-				}
-				response += " # " + ingNum + " " + amountInInventory;
-				sendResponse(response);
-				break;
+			DataInputStream dis = new DataInputStream(socket.getInputStream());
+			DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
+			boolean notFinished = true;
+			while (notFinished) {
+				String[] request = dis.readUTF().split(" ");
+				int clientNum = Integer.parseInt(request[0]); 
+				String response = "";
+				switch (request[1]) {
 				
-			case "BUY":
-				if (true == Server.checkOutClient(clientNum)){
-					response += "ACK";
+				case "ORD":
+					int ingNum = Integer.parseInt(request[2]);
+					int ingQnt = Integer.parseInt(request[3]);
+					int amountInInventory = Inventory.getInventory().amountLeft(ingNum);
+					if (amountInInventory >= ingQnt) {
+						response += "ACK";
+						Server.addItem(clientNum, ingNum, ingQnt);
+					}
+					else {
+						response += "NACK"; 
+					}
+					response += " # " + ingNum + " " + amountInInventory;
+					dos.writeUTF(response);
+					break;
+					
+				case "BUY":
+					if (true == Server.checkOutClient(clientNum)){
+						response += "ACK";
+					}
+					else {
+						response += "NACK"; 				
+					}
+					response += " ORD";
+					Server.removeCart(clientNum);
+					dos.writeUTF(response);
+					break;
+					
+				case "FIN":
+					System.out.println("closing socket for client " +  clientNum + " in Server - client finished");
+					Server.clientFinished();
+					dis.close();
+					dos.close();
+					socket.close();
+					notFinished = false;
+					break;
 				}
-				else {
-					response += "NACK"; 				
-				}
-				response += " ORD";
-				Server.removeCart(clientNum);
-				sendResponse(response);
-				break;
-				
-			case "FIN":
-				socket.close();	
-				Server.clientFinished();
 			}
+			
 				
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	
-	private void sendResponse(String response) throws IOException {
-		DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
-		dos.writeUTF(response);
-		dos.close();
-	}
-
 	
 }
