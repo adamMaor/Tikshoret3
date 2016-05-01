@@ -46,7 +46,7 @@ public class Inventory {
 	public String toString() {
 		TreeSet<Ingredient> sorted = new TreeSet<>(ingredients.values());
 		String output = "Inventory\n------------------\n";
-		for (Ingredient p : ingredients.values()) {
+		for (Ingredient p : sorted/*ingredients.values()*/) {
 			output += "Ingredient: " + p.getIngredientName() + ", Quantity: " + p.getIngredientQuantity() + "\n";
 		}
 		return output;
