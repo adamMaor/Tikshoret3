@@ -14,7 +14,7 @@ import java.util.Random;
  *
  */
 public class Client extends Thread {
-
+	/** check comment */
 	private HashMap<Integer, Integer> myOrder;
 
 	private int clientNum;
