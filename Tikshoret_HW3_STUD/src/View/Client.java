@@ -32,20 +32,24 @@ public class Client extends Thread {
 	public void run() {		
 		boolean finished = false;	
 		try {
+			// In our implementation we have 1 socket, 1 reader and 1 writer for each client
 			clientSocket = new Socket("127.0.0.1", 9999);
 			dos = new DataOutputStream(clientSocket.getOutputStream());
 			dis = new DataInputStream(clientSocket.getInputStream());
 			while (finished == false)
 			{
 				myOrder.clear();
+				// appemptsForCurrent will make sure we only make attempts as required for a specific item
 				int appemptsForCurrent = 0;
 				int ingNum = getRandomPartNum();
 				int ingQnt = getRandomQuantity(Constants.INIT_QTY);
 				while (myOrder.size() < Constants.ITEMS_IN_ORD) {
 					appemptsForCurrent++;
 					String[] response = sendRequest(ingNum, ingQnt);
-					// Do we need to check for matches in ORD/BUY/FIN, and Ing Number ????
+					// if the response was ACK - then we add the item and quantity to cart
+					// then, reset params and go again for next item
 					if (response[0].equals("ACK")){
+						// as specified in forum - if already exists - add to current quantity to new one
 						if (myOrder.containsKey(ingNum)){
 							ingQnt += myOrder.get(ingNum);
 						}
@@ -54,8 +58,11 @@ public class Client extends Thread {
 						ingQnt = getRandomQuantity(Constants.INIT_QTY);
 						appemptsForCurrent = 0;
 					}
+					// if the response was NACK - 2 cases:
 					else {
+						// get number of items available for this product
 						int availableQnt = Integer.parseInt(response[3]);
+						// availableQnt == 0
 						if (availableQnt == 0 || appemptsForCurrent > Constants.ATTMPTS_PER_ITEM){
 							ingNum = getRandomPartNum();
 							ingQnt = getRandomQuantity(Constants.INIT_QTY);
@@ -66,8 +73,11 @@ public class Client extends Thread {
 						}
 					}		
 				}
+				// when reached here - cart is full.
+				// if finished == true - then we're done. else, start over from scratch
 				finished = sendBUY();				
 			}
+			// when reached here - cart was approved. print and send FIN to server
 			printOrder();
 			sendFIN();
 		}catch (IOException e) {
@@ -87,7 +97,8 @@ public class Client extends Thread {
 	// sends a BUY REQUEST message to to server and returns a boolean response
 	private boolean sendBUY() throws IOException {
 		String buyRequest = clientNum + " BUY ";
-		dos.writeUTF(buyRequest);	
+		dos.writeUTF(buyRequest);
+		// wait for response if ACK return true
 		String[] buyResponse = dis.readUTF().split(" ");
 		return buyResponse[0].equals("ACK");		
 	}
@@ -95,7 +106,8 @@ public class Client extends Thread {
 	// sends an ORD REQUEST message for a single ingredient and returns the server's RESPONSE message
 	private String[] sendRequest(int ingredientNumber, int quantity) throws IOException {
 		String ordRequest = clientNum + " ORD " + ingredientNumber + " " + quantity;	
-		dos.writeUTF(ordRequest);	
+		dos.writeUTF(ordRequest);
+		// wait for response, parse and return
 		String[] orderResponse = dis.readUTF().split(" ");
 		// do we need to check "ORD" ? not much use for it....
 		
@@ -106,6 +118,7 @@ public class Client extends Thread {
 	private void sendFIN() throws IOException {
 		String finRequest = clientNum + " FIN ";		
 		dos.writeUTF(finRequest);
+		// no need to wait
 	}
 
 	public void printOrder() {
