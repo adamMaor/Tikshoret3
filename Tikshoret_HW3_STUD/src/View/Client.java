@@ -100,7 +100,7 @@ public class Client extends Thread {
 		dos.writeUTF(buyRequest);
 		// wait for response if ACK return true
 		String[] buyResponse = dis.readUTF().split(" ");
-		return buyResponse[0].equals("ACK");		
+		return (buyResponse[0].equals("ACK") && buyResponse[1].equals("ORD"));		
 	}
 
 	// sends an ORD REQUEST message for a single ingredient and returns the server's RESPONSE message
