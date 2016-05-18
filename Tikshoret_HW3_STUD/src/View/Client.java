@@ -48,7 +48,7 @@ public class Client extends Thread {
 					String[] response = sendRequest(ingNum, ingQnt);
 					// if the response was ACK - then we add the item and quantity to cart
 					// then, reset params and go again for next item
-					if (response[0].equals("ACK")){
+					if (response[0].equals("ACK") && response[1].equals("#")){
 						// as specified in forum - if already exists - add to current quantity to new one
 						if (myOrder.containsKey(ingNum)){
 							ingQnt += myOrder.get(ingNum);

@@ -46,7 +46,6 @@ public class Server {
 				}
 			}
 			// if reached here - all clients are finished
-			System.out.println("...All Clients Are Finished...\n" + Inventory.getInventory().toString());
 			
 		} catch (IOException e) {
 			System.out.println("ERROR: a server communication error has occured...");

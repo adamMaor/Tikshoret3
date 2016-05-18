@@ -26,7 +26,6 @@ public class Client_Server {
 			e.printStackTrace();
 		}
 		
-//		new Client(1).start();
 
 		while (i++ < Constants.NUM_OF_CLIENTS) {
 			new Client(i).start();

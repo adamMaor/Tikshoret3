@@ -64,7 +64,6 @@ public class ClientHandler implements Runnable {
 					break;
 					
 				case "FIN":
-					System.out.println("closing socket for client " +  clientNum + " in Server - client finished");
 					Server.clientFinished();
 					// we close the socket only in server
 					dis.close();
